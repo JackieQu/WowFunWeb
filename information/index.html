@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <script src="../lib/jquery.js"></script>
+        <script src="../lib/template.js"></script>
+        <title>信息表</title>
+    </head>
+    <style type="text/css">
+        * {
+            margin: 0;
+            padding: 0;
+            word-break: break-all;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        h1 {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .info-main-view {
+            width: 80%;
+            margin: 0 0 100px 10%;
+            border:solid 1px orange;
+        }
+        #info-list-view table {
+            width: calc(100% - 20px); 
+            margin: 10px;
+            text-align: center;
+            border: dashed 1px orange; 
+        }
+        /* #info-list-view tr, th, td {
+            width: 25%;
+        } */
+        #info-list-view th, td {
+            border: dashed 1px orange;
+        }
+        #info-list-view .title {
+            color: white;
+            background-color: orange;
+        }
+        #info-list-view .content {
+            border: solid 1px orange;
+        }
+        .info-post-view {
+            min-width: 200px;
+            margin: 20px calc(50% - 100px);
+            color: orange; 
+            text-align: center;
+            border: dashed 1px orange;
+        }
+        .info-post-view input {
+            border: dashed 1px orange;
+        }
+        .info-post-view  button {
+            width: 80px;
+            height: 20px;
+            margin: 10px 0;
+            color: white;
+            background-color: orange;
+            border-radius: 5px;
+        }
+    </style>
+    <body>
+        <h1 style="color: orange;">信息表</h1>
+        <div class="info-main-view">
+            <div id="info-list-view"></div>
+            <script id="info-list" type="text/html">
+                <table>
+                    <tr class="title">
+                        <th>编号</th>
+                        <th>姓名</th>
+                        <th>手机</th>
+                        <th>地址</th>
+                    </tr>
+                    {{each}}
+                        <tr class="content">
+                            <td>{{$value.pk}}</td>
+                            <td>{{$value.name}}</td>
+                            <td>{{$value.phone}}</td>
+                            <td>{{$value.address}}</td>
+                        </tr>
+                    {{/each}}
+                </table> 
+            </script>
+
+            <div class="info-post-view">
+                <h4>新信息</h4>
+                <form>
+                    <span>姓名：</span><input id="name" type="text"><br>
+                    <span>手机：</span><input id="phone" type="text"><br>
+                    <span>地址：</span><input id="address" type="text"><br>
+                </form>
+                <button id='info-create'>提交</button>
+            </div>
+        </div>  
+
+        <script type="text/javascript">
+            
+            let api_server = "http://127.0.0.1:8000/";
+            let info_list = "information/info";
+            let info_create = "information/info/create/";
+
+            window.onload=function(){
+                
+                getInfo();
+                
+                $("#info-create").click(function(){
+                    var name = $("#name").val();
+                    var phone = $("#phone").val();
+                    var address = $("#address").val();
+                    if (name && phone && address) {
+                        var reg = /^1[3-9]\d{9}$/;
+                        if (reg.test(phone)) {
+                            createInfo(name, phone, address);  
+                        } else {
+                            alert("请输入正确手机号码");
+                        }
+                    } else {
+                        var msg = "请输入" + (!name ? "姓名" : !phone ? "手机号码" : "地址");
+                        alert(msg);
+                    }
+                });
+            }
+
+            function getInfo() {
+                $.ajax({
+                    // url: api_server + info_list,
+                    url: "http://xy6.gzcankao.com:8081/app_if/getArticleContent?articleId=50009053&version=0",
+                    type: 'get',
+                    // headers: {
+                    // },
+                    timeout: 6000,
+                    success: function(json) {
+                        console.log(json.items);
+                        innerHTML("info-list", "info-list-view", json.items);
+                    },
+                    error: function(xhr, textStatus) {
+                        console.log(textStatus);
+                        // test
+                        var json = {"items": [{"pk": 1, "name": "\u66f9\u64cd", "phone": "13266669999", "address": "\u8bb8\u660c", "date_time": "2019-08-02 08:11:40"}, {"pk": 2, "name": "\u5f20\u8fbd", "phone": "13211119999", "address": "\u8bb8\u660c", "date_time": "2019-08-02 08:23:43"}, {"pk": 3, "name": "\u4e50\u8fdb", "phone": "13222229999", "address": "\u8bb8\u660c", "date_time": "2019-08-05 01:46:52"}, {"pk": 4, "name": "\u4e8e\u7981", "phone": "13233339999", "address": "\u8bb8\u660c", "date_time": "2019-08-05 03:21:11"}, {"pk": 5, "name": "\u5f20\u90c3", "phone": "13244449999", "address": "\u8bb8\u660c", "date_time": "2019-08-05 05:51:29"}, {"pk": 6, "name": "\u5f90\u6643", "phone": "13255559999", "address": "\u8bb8\u660c", "date_time": "2019-08-05 05:52:31"}]};
+                        innerHTML("info-list", "info-list-view", json.items);
+                    }
+                });  
+            }
+
+            function innerHTML(template_id, html_id, data) {
+                var html = template(template_id, data);
+                document.getElementById(html_id).innerHTML = html;
+            }
+
+            function createInfo(name, phone, address) {
+                $.ajax({
+                    url: api_server + info_create,
+                    type: 'post',
+                    headers: {
+                    },
+                    data: {
+                        name: name,
+                        phone: phone,
+                        address: address
+                    },
+                    timeout: 6000,
+                    success: function(json) {
+                        console.log(json);
+                        if (json.result == 'succeed') {
+                            alert("添加成功");
+                            getInfo();
+                        }
+                    },
+                    error: function(xhr, textStatus) {
+                        console.log(textStatus);
+                        alert("添加失败");
+                    }
+                })
+            }
+        </script>
+    </body>
+</html>
